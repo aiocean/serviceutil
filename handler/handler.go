@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"log"
 	"net"
 	"os"
 
@@ -44,8 +45,13 @@ func NewHandler(
 	reflection.Register(grpcServer)
 	serviceServer.Register(grpcServer)
 
+	port := "8080"
+	if v := os.Getenv("PORT"); v != "" {
+		port = v
+	}
+
 	handler := &Handler{
-		Address:    ":" + os.Getenv("PORT"),
+		Address:    net.JoinHostPort("", port),
 		Logger:     logger,
 		GrpcServer: grpcServer,
 	}
@@ -58,7 +64,12 @@ func NewHandler(
 }
 
 func (h *Handler) Serve() {
-	defer h.Logger.Sync()
+	defer func(Logger *zap.Logger) {
+		err := Logger.Sync()
+		if err != nil {
+			log.Println("err:" + err.Error())
+		}
+	}(h.Logger)
 
 	h.Logger.Info("serve at: " + h.Address)
 
