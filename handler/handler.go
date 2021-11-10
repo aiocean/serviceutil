@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/wire"
 	"pkg.aiocean.dev/serviceutil/healthserver"
+	"pkg.aiocean.dev/serviceutil/interceptor"
 
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -32,15 +33,15 @@ func NewHandler(
 	ctx context.Context,
 	logger *zap.Logger,
 	serviceServer ServiceServer,
-	streamServerInterceptor grpc.StreamServerInterceptor,
-	unaryServerInterceptor grpc.UnaryServerInterceptor,
 	healthServer *healthserver.Server,
+	interceptor *interceptor.Interceptor,
 ) *Handler {
 
 	grpcServer := grpc.NewServer(
-		grpc.StreamInterceptor(streamServerInterceptor),
-		grpc.UnaryInterceptor(unaryServerInterceptor),
+		grpc.StreamInterceptor(interceptor.StreamServerInterceptor),
+		grpc.UnaryInterceptor(interceptor.UnaryServerInterceptor),
 	)
+
 	healthServer.Register(grpcServer)
 	reflection.Register(grpcServer)
 	serviceServer.Register(grpcServer)

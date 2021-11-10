@@ -2,28 +2,47 @@ package interceptor
 
 import (
 	"github.com/google/wire"
-	grpcmiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpczap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	grpc_validator "github.com/grpc-ecosystem/go-grpc-middleware/validator"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
 
-var WireSet = wire.NewSet(
-	NewStreamServerInterceptor,
-	NewUnaryServerInterceptor,
+var DefaultWireSet = wire.NewSet(
+	DefaultStreamServerInterceptor,
+	DefaultUnaryServerInterceptor,
 )
 
-func NewStreamServerInterceptor(logger *zap.Logger) grpc.StreamServerInterceptor {
-	return grpcmiddleware.ChainStreamServer(
-		grpczap.StreamServerInterceptor(logger),
-		grpc_validator.StreamServerInterceptor(),
-	)
+var WireSet = wire.NewSet(
+	NewInterceptor,
+)
+
+type Interceptor struct {
+	StreamServerInterceptor grpc.StreamServerInterceptor
+	UnaryServerInterceptor  grpc.UnaryServerInterceptor
 }
 
-func NewUnaryServerInterceptor(logger *zap.Logger) grpc.UnaryServerInterceptor {
-	return grpcmiddleware.ChainUnaryServer(
+func NewInterceptor(streamServerInterceptors []grpc.StreamServerInterceptor, unaryServerInterceptors []grpc.UnaryServerInterceptor) *Interceptor {
+	interceptor := Interceptor{
+		StreamServerInterceptor: grpc_middleware.ChainStreamServer(streamServerInterceptors...),
+		UnaryServerInterceptor:  grpc_middleware.ChainUnaryServer(unaryServerInterceptors...),
+	}
+
+	return &interceptor
+}
+
+func DefaultStreamServerInterceptor(logger *zap.Logger) []grpc.StreamServerInterceptor {
+	return []grpc.StreamServerInterceptor{
+		grpczap.StreamServerInterceptor(logger),
+		grpc_validator.StreamServerInterceptor(),
+	}
+
+}
+
+func DefaultUnaryServerInterceptor(logger *zap.Logger) []grpc.UnaryServerInterceptor {
+	return []grpc.UnaryServerInterceptor{
 		grpczap.UnaryServerInterceptor(logger),
 		grpc_validator.UnaryServerInterceptor(),
-	)
+	}
 }
