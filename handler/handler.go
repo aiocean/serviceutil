@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/google/wire"
+	"pkg.aiocean.dev/serviceutil/datadogtrace"
 	"pkg.aiocean.dev/serviceutil/healthserver"
 	"pkg.aiocean.dev/serviceutil/interceptor"
 
@@ -35,7 +36,9 @@ func NewHandler(
 	serviceServer ServiceServer,
 	healthServer *healthserver.Server,
 	interceptor *interceptor.Interceptor,
+	dataDogTrace *datadogtrace.DataDogTrace,
 ) *Handler {
+	dataDogTrace.StartTrace()
 
 	grpcServer := grpc.NewServer(
 		grpc.StreamInterceptor(interceptor.StreamServerInterceptor),

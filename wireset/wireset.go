@@ -10,7 +10,7 @@ import (
 
 var Default = wire.NewSet(
 	logger.NewLogger,
-	handler.WireSet,
 	healthserver.WireSet,
 	interceptor.WireSet,
+	handler.WireSet,
 )
