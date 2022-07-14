@@ -13,6 +13,7 @@ var Default = wire.NewSet(
 	logger.NewLogger,
 	datadogtrace.DefaultDataDogTraceWireSet,
 	healthserver.WireSet,
+	interceptor.WireSet,
 	interceptor.DefaultWireSet,
 	handler.WireSet,
 )
