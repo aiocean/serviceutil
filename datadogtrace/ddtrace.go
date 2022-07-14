@@ -21,11 +21,7 @@ func NewDataDogTrace() (*DataDogTrace, func(), error) {
 // startTrace
 
 func (dd *DataDogTrace) StartTrace() {
-	tracer.Start(
-		tracer.WithEnv("prod"),
-		tracer.WithService("test-go"),
-		tracer.WithServiceVersion("abc123"),
-	)
+	tracer.Start()
 }
 
 func (dd *DataDogTrace) StopTrace() {
