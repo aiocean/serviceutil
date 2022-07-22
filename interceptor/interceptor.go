@@ -4,6 +4,7 @@ import (
 	"github.com/google/wire"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpczap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
+	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	grpc_validator "github.com/grpc-ecosystem/go-grpc-middleware/validator"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -35,6 +36,7 @@ func NewInterceptor(streamServerInterceptors []grpc.StreamServerInterceptor, una
 func DefaultStreamServerInterceptor(logger *zap.Logger) []grpc.StreamServerInterceptor {
 	return []grpc.StreamServerInterceptor{
 		grpczap.StreamServerInterceptor(logger),
+		grpc_recovery.StreamServerInterceptor(),
 		grpc_validator.StreamServerInterceptor(),
 	}
 
@@ -43,6 +45,7 @@ func DefaultStreamServerInterceptor(logger *zap.Logger) []grpc.StreamServerInter
 func DefaultUnaryServerInterceptor(logger *zap.Logger) []grpc.UnaryServerInterceptor {
 	return []grpc.UnaryServerInterceptor{
 		grpczap.UnaryServerInterceptor(logger),
+		grpc_recovery.UnaryServerInterceptor(),
 		grpc_validator.UnaryServerInterceptor(),
 	}
 }

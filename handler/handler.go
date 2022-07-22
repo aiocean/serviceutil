@@ -33,7 +33,7 @@ type ServiceServer interface {
 func NewHandler(
 	ctx context.Context,
 	logger *zap.Logger,
-	serviceServer ServiceServer,
+	serviceServers []ServiceServer,
 	healthServer *healthserver.Server,
 	interceptor *interceptor.Interceptor,
 	dataDogTrace *datadogtrace.DataDogTrace,
@@ -47,7 +47,9 @@ func NewHandler(
 
 	healthServer.Register(grpcServer)
 	reflection.Register(grpcServer)
-	serviceServer.Register(grpcServer)
+	for _, server := range serviceServers {
+		server.Register(grpcServer)
+	}
 
 	port := "8080"
 	if v := os.Getenv("PORT"); v != "" {
