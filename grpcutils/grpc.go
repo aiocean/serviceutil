@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"strings"
 
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -28,6 +29,9 @@ func NewGrpcConnection(ctx context.Context, host string) (*grpc.ClientConn, erro
 	} else {
 		opts = append(opts, grpc.WithInsecure())
 	}
+
+	opts = append(opts, grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()))
+	opts = append(opts, grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()))
 
 	grpcConn, err := grpc.DialContext(ctx, host, opts...)
 	if err != nil {
