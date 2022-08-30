@@ -7,10 +7,11 @@ import (
 	"os"
 
 	"github.com/google/wire"
-	"pkg.aiocean.dev/serviceutil/datadogtrace"
+	"go.opentelemetry.io/otel"
 	"pkg.aiocean.dev/serviceutil/healthserver"
 	"pkg.aiocean.dev/serviceutil/interceptor"
 
+	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -36,9 +37,10 @@ func NewHandler(
 	serviceServer ServiceServer,
 	healthServer *healthserver.Server,
 	interceptor *interceptor.Interceptor,
-	dataDogTrace *datadogtrace.DataDogTrace,
+	tracerSvc *tracesdk.TracerProvider,
 ) *Handler {
-	dataDogTrace.StartTrace()
+
+	otel.SetTracerProvider(tracerSvc)
 
 	grpcServer := grpc.NewServer(
 		grpc.StreamInterceptor(interceptor.StreamServerInterceptor),
