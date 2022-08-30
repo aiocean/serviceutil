@@ -27,6 +27,10 @@ var DefaultTracerSet = wire.NewSet(
 	NewTracer,
 )
 
+var EnvConfigSet = wire.NewSet(
+	NewConfigFromEnv,
+)
+
 func NewConfigFromEnv() (*TracerConfig, error) {
 	cfg := &TracerConfig{}
 	ok := false
