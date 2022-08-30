@@ -2,7 +2,6 @@ package healthserver
 
 import (
 	"context"
-	"log"
 
 	"github.com/google/wire"
 	"google.golang.org/grpc"
@@ -26,9 +25,6 @@ func (s *Server) Register(grpcServer *grpc.Server) {
 }
 
 func (s *Server) Check(ctx context.Context, in *grpc_health_v1.HealthCheckRequest) (*grpc_health_v1.HealthCheckResponse, error) {
-
-	log.Printf("Handling grpc Check request")
-	// yeah, right, open 24x7, like 7-11
 	return &grpc_health_v1.HealthCheckResponse{Status: grpc_health_v1.HealthCheckResponse_SERVING}, nil
 }
 
