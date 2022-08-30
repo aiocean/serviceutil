@@ -7,6 +7,7 @@ import (
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	grpc_validator "github.com/grpc-ecosystem/go-grpc-middleware/validator"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"go.opentelemetry.io/otel"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
@@ -39,7 +40,7 @@ func DefaultStreamServerInterceptor(logger *zap.Logger) []grpc.StreamServerInter
 		grpczap.StreamServerInterceptor(logger),
 		grpc_recovery.StreamServerInterceptor(),
 		grpc_validator.StreamServerInterceptor(),
-		otelgrpc.StreamServerInterceptor(),
+		otelgrpc.StreamServerInterceptor(otelgrpc.WithTracerProvider(otel.GetTracerProvider())),
 	}
 
 }
@@ -49,6 +50,6 @@ func DefaultUnaryServerInterceptor(logger *zap.Logger) []grpc.UnaryServerInterce
 		grpczap.UnaryServerInterceptor(logger),
 		grpc_recovery.UnaryServerInterceptor(),
 		grpc_validator.UnaryServerInterceptor(),
-		otelgrpc.UnaryServerInterceptor(),
+		otelgrpc.UnaryServerInterceptor(otelgrpc.WithTracerProvider(otel.GetTracerProvider())),
 	}
 }
