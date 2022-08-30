@@ -15,7 +15,8 @@ import (
 )
 
 type TracerConfig struct {
-	JaegerUrl         string
+	JaegerHost        string
+	JaegerPort        string
 	Logger            *zap.Logger
 	ServiceName       string
 	ServiceInstanceId string
@@ -35,9 +36,13 @@ func NewConfigFromEnv() (*TracerConfig, error) {
 	cfg := &TracerConfig{}
 	ok := false
 
-	cfg.JaegerUrl, ok = os.LookupEnv("JAEGER_URL")
+	cfg.JaegerHost, ok = os.LookupEnv("JAEGER_HOST")
 	if !ok {
-		return nil, errors.New("JAEGER_URL is not set")
+		return nil, errors.New("JAEGER_HOST is not set")
+	}
+	cfg.JaegerPort, ok = os.LookupEnv("JAEGER_PORT")
+	if !ok {
+		return nil, errors.New("JAEGER_PORT is not set")
 	}
 
 	cfg.ServiceName, ok = os.LookupEnv("SERVICE_NAME")
@@ -64,7 +69,7 @@ func NewConfigFromEnv() (*TracerConfig, error) {
 }
 
 func NewTracer(ctx context.Context, cfg *TracerConfig, logger *zap.Logger) (*tracesdk.TracerProvider, func(), error) {
-	exp, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(cfg.JaegerUrl)))
+	exp, err := jaeger.New(jaeger.WithAgentEndpoint(jaeger.WithAgentHost(cfg.JaegerHost), jaeger.WithAgentPort(cfg.JaegerPort)))
 	if err != nil {
 		return nil, nil, err
 	}
