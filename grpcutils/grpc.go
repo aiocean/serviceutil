@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
-	"go.opentelemetry.io/otel"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -31,8 +30,8 @@ func NewGrpcConnection(ctx context.Context, host string) (*grpc.ClientConn, erro
 		opts = append(opts, grpc.WithInsecure())
 	}
 
-	opts = append(opts, grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor(otelgrpc.WithTracerProvider(otel.GetTracerProvider()))))
-	opts = append(opts, grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor(otelgrpc.WithTracerProvider(otel.GetTracerProvider()))))
+	opts = append(opts, grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()))
+	opts = append(opts, grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()))
 
 	grpcConn, err := grpc.DialContext(ctx, host, opts...)
 	if err != nil {
