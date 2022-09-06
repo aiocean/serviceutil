@@ -8,9 +8,7 @@ import (
 
 	"github.com/google/wire"
 	"go.opentelemetry.io/otel/exporters/jaeger"
-	"go.opentelemetry.io/otel/sdk/resource"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.12.0"
 	"go.uber.org/zap"
 )
 
@@ -69,20 +67,13 @@ func NewConfigFromEnv() (*TracerConfig, error) {
 }
 
 func NewTracer(ctx context.Context, cfg *TracerConfig, logger *zap.Logger) (*tracesdk.TracerProvider, func(), error) {
-	exp, err := jaeger.New(jaeger.WithAgentEndpoint(jaeger.WithAgentHost(cfg.JaegerHost), jaeger.WithAgentPort(cfg.JaegerPort)))
+	exp, err := jaeger.New(jaeger.WithAgentEndpoint())
 	if err != nil {
 		return nil, nil, err
 	}
 
 	tp := tracesdk.NewTracerProvider(
 		tracesdk.WithBatcher(exp),
-		tracesdk.WithResource(resource.NewWithAttributes(
-			semconv.SchemaURL,
-			semconv.ServiceNameKey.String(cfg.ServiceName),
-			semconv.ServiceInstanceIDKey.String(cfg.ServiceInstanceId),
-			semconv.ServiceNamespaceKey.String(cfg.ServiceNamespace),
-			semconv.ServiceVersionKey.String(cfg.ServiceVersion),
-		)),
 	)
 
 	cleanup := func() {
