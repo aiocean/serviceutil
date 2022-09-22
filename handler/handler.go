@@ -6,9 +6,9 @@ import (
 	"net"
 	"os"
 
+	"github.com/aiocean/serviceutil/healthserver"
+	"github.com/aiocean/serviceutil/interceptor"
 	"github.com/google/wire"
-	"pkg.aiocean.dev/serviceutil/healthserver"
-	"pkg.aiocean.dev/serviceutil/interceptor"
 
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
