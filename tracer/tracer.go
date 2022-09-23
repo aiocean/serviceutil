@@ -2,78 +2,64 @@ package tracer
 
 import (
 	"context"
-	"errors"
-	"os"
+	"strings"
 	"time"
 
 	"github.com/google/wire"
 	"go.opentelemetry.io/otel/exporters/jaeger"
+	"go.opentelemetry.io/otel/sdk/resource"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 )
-
-type TracerConfig struct {
-	JaegerHost        string
-	JaegerPort        string
-	Logger            *zap.Logger
-	ServiceName       string
-	ServiceInstanceId string
-	ServiceNamespace  string
-	ServiceVersion    string
-}
 
 var DefaultTracerSet = wire.NewSet(
 	NewTracer,
 )
 
-var EnvConfigSet = wire.NewSet(
-	NewConfigFromEnv,
-)
+type normalSampler struct{}
 
-func NewConfigFromEnv() (*TracerConfig, error) {
-	cfg := &TracerConfig{}
-	ok := false
+func (_ *normalSampler) ShouldSample(p tracesdk.SamplingParameters) tracesdk.SamplingResult {
+	psc := trace.SpanContextFromContext(p.ParentContext)
 
-	cfg.JaegerHost, ok = os.LookupEnv("JAEGER_HOST")
-	if !ok {
-		return nil, errors.New("JAEGER_HOST is not set")
-	}
-	cfg.JaegerPort, ok = os.LookupEnv("JAEGER_PORT")
-	if !ok {
-		return nil, errors.New("JAEGER_PORT is not set")
+	if strings.HasSuffix(p.Name, "Health/Check") {
+		return tracesdk.SamplingResult{
+			Decision:   tracesdk.Drop,
+			Tracestate: psc.TraceState(),
+		}
 	}
 
-	cfg.ServiceName, ok = os.LookupEnv("SERVICE_NAME")
-	if !ok {
-		return nil, errors.New("SERVICE_NAME is not set")
+	return tracesdk.SamplingResult{
+		Decision:   tracesdk.RecordAndSample,
+		Tracestate: psc.TraceState(),
 	}
-
-	cfg.ServiceInstanceId, ok = os.LookupEnv("SERVICE_INSTANCE_ID")
-	if !ok {
-		return nil, errors.New("SERVICE_INSTANCE_ID is not set")
-	}
-
-	cfg.ServiceNamespace, ok = os.LookupEnv("SERVICE_NAMESPACE")
-	if !ok {
-		return nil, errors.New("SERVICE_NAMESPACE is not set")
-	}
-
-	cfg.ServiceVersion, ok = os.LookupEnv("SERVICE_VERSION")
-	if !ok {
-		return nil, errors.New("SERVICE_VERSION is not set")
-	}
-
-	return cfg, nil
 }
 
-func NewTracer(ctx context.Context, cfg *TracerConfig, logger *zap.Logger) (*tracesdk.TracerProvider, func(), error) {
+func (_ *normalSampler) Description() string {
+	return "NormalSampler"
+}
+
+// NewTracer create a default tracer provider with jaeger agent
+// these env are necessary for initialization
+// - OTEL_EXPORTER_JAEGER_AGENT_HOST for the agent address host
+// - OTEL_EXPORTER_JAEGER_AGENT_PORT for the agent address port
+// - OTEL_SERVICE_NAME for service name
+func NewTracer(ctx context.Context, logger *zap.Logger) (*tracesdk.TracerProvider, func(), error) {
 	exp, err := jaeger.New(jaeger.WithAgentEndpoint())
+	if err != nil {
+		return nil, nil, err
+	}
+	rs, err := resource.New(ctx,
+		resource.WithFromEnv(), // pull attributes from OTEL_RESOURCE_ATTRIBUTES and OTEL_SERVICE_NAME environment variables
+	)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	tp := tracesdk.NewTracerProvider(
 		tracesdk.WithBatcher(exp),
+		tracesdk.WithSampler(&normalSampler{}),
+		tracesdk.WithResource(rs),
 	)
 
 	cleanup := func() {
