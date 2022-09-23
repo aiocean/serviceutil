@@ -68,9 +68,7 @@ func NewLogger(ctx context.Context) (*zap.Logger, error) {
 		ErrorOutputPaths:  []string{"stderr"},
 	}
 
-	logger, err := zapConfig.Build(zap.WrapCore(func(c zapcore.Core) zapcore.Core {
-		return &ignoreHealthCheckCore{c}
-	}))
+	logger, err := zapConfig.Build()
 	if err != nil {
 		return nil, err
 	}
@@ -78,6 +76,9 @@ func NewLogger(ctx context.Context) (*zap.Logger, error) {
 	instanceID := uuid.New().String()
 	logger = logger.With(zap.String("K_REVISION", os.Getenv("K_REVISION")), zap.String("instance_id", instanceID))
 	// grpc_zap.ReplaceGrpcLoggerV2(logger)
+	logger = logger.WithOptions(zap.WrapCore(func(c zapcore.Core) zapcore.Core {
+		return &ignoreHealthCheckCore{c}
+	}))
 
 	return logger, nil
 
