@@ -23,17 +23,14 @@ func (ig *ignoreHealthCheckCore) With(fs []zapcore.Field) zapcore.Core {
 }
 
 func (ig *ignoreHealthCheckCore) Check(e zapcore.Entry, ce *zapcore.CheckedEntry) *zapcore.CheckedEntry {
+	if e.Level == zap.InfoLevel && strings.HasSuffix(e.Message, "finished unary call with code OK") {
+		return nil
+	}
+
 	return ig.c.Check(e, ce)
 }
 
 func (ig *ignoreHealthCheckCore) Write(e zapcore.Entry, fs []zapcore.Field) error {
-	if e.Level == zap.InfoLevel && strings.HasSuffix(e.Message, "code OK") {
-		for _, f := range fs {
-			if f.Key == "grpc.service" && strings.HasPrefix(f.String, "grpc.health") {
-				return nil
-			}
-		}
-	}
 
 	return ig.c.Write(e, fs)
 }
