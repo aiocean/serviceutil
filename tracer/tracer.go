@@ -22,7 +22,7 @@ type normalSampler struct{}
 func (_ *normalSampler) ShouldSample(p tracesdk.SamplingParameters) tracesdk.SamplingResult {
 	psc := trace.SpanContextFromContext(p.ParentContext)
 
-	if strings.HasSuffix(p.Name, "Health/Check") {
+	if strings.HasSuffix(p.Name, "Health/Check") || strings.HasSuffix(p.Name, "/healthz") {
 		return tracesdk.SamplingResult{
 			Decision:   tracesdk.Drop,
 			Tracestate: psc.TraceState(),

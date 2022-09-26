@@ -3,6 +3,7 @@ package logger
 import (
 	"context"
 	"os"
+	"strings"
 
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -20,7 +21,14 @@ func (ig ignoreHealthCheckCore) Enabled(lv zapcore.Level) bool {
 
 func (ig ignoreHealthCheckCore) With(fs []zapcore.Field) zapcore.Core {
 	for _, f := range fs {
+		// GRPC health check
 		if f.Key == "grpc.service" && f.String == "grpc.health.v1.Health" {
+			ig.isHealthCheck = true
+			break
+		}
+
+		// HTTP health check
+		if f.Key == "url" && strings.HasSuffix(f.String, "/healthz") {
 			ig.isHealthCheck = true
 			break
 		}
