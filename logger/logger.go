@@ -14,24 +14,24 @@ type ignoreHealthCheckCore struct {
 	isHealthCheck bool
 }
 
-func (ig *ignoreHealthCheckCore) Enabled(lv zapcore.Level) bool {
+func (ig ignoreHealthCheckCore) Enabled(lv zapcore.Level) bool {
 	return ig.c.Enabled(lv)
 }
 
-func (ig *ignoreHealthCheckCore) With(fs []zapcore.Field) zapcore.Core {
+func (ig ignoreHealthCheckCore) With(fs []zapcore.Field) zapcore.Core {
 	for _, f := range fs {
 		if f.Key == "grpc.service" && f.String == "grpc.health.v1.Health" {
 			ig.isHealthCheck = true
 			break
 		}
 	}
-	return &ignoreHealthCheckCore{
+	return ignoreHealthCheckCore{
 		c:             ig.c.With(fs),
 		isHealthCheck: ig.isHealthCheck,
 	}
 }
 
-func (ig *ignoreHealthCheckCore) Check(e zapcore.Entry, ce *zapcore.CheckedEntry) *zapcore.CheckedEntry {
+func (ig ignoreHealthCheckCore) Check(e zapcore.Entry, ce *zapcore.CheckedEntry) *zapcore.CheckedEntry {
 	if ig.isHealthCheck {
 		return nil
 	}
@@ -39,11 +39,11 @@ func (ig *ignoreHealthCheckCore) Check(e zapcore.Entry, ce *zapcore.CheckedEntry
 	return ig.c.Check(e, ce)
 }
 
-func (ig *ignoreHealthCheckCore) Write(e zapcore.Entry, fs []zapcore.Field) error {
+func (ig ignoreHealthCheckCore) Write(e zapcore.Entry, fs []zapcore.Field) error {
 	return ig.c.Write(e, fs)
 }
 
-func (ig *ignoreHealthCheckCore) Sync() error {
+func (ig ignoreHealthCheckCore) Sync() error {
 	return ig.c.Sync()
 }
 
@@ -75,7 +75,7 @@ func NewLogger(ctx context.Context) (*zap.Logger, error) {
 	}
 
 	logger, err := zapConfig.Build(zap.WrapCore(func(c zapcore.Core) zapcore.Core {
-		return &ignoreHealthCheckCore{c: c}
+		return ignoreHealthCheckCore{c: c}
 	}))
 	if err != nil {
 		return nil, err
