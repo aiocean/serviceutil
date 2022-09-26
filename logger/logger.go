@@ -3,7 +3,6 @@ package logger
 import (
 	"context"
 	"os"
-	"strings"
 
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -11,7 +10,8 @@ import (
 )
 
 type ignoreHealthCheckCore struct {
-	c zapcore.Core
+	c             zapcore.Core
+	isHealthCheck bool
 }
 
 func (ig *ignoreHealthCheckCore) Enabled(lv zapcore.Level) bool {
@@ -19,11 +19,20 @@ func (ig *ignoreHealthCheckCore) Enabled(lv zapcore.Level) bool {
 }
 
 func (ig *ignoreHealthCheckCore) With(fs []zapcore.Field) zapcore.Core {
-	return ig.c.With(fs)
+	for _, f := range fs {
+		if f.Key == "grpc.service" && f.String == "grpc.health.v1.Health" {
+			ig.isHealthCheck = true
+			break
+		}
+	}
+	return &ignoreHealthCheckCore{
+		c:             ig.c.With(fs),
+		isHealthCheck: ig.isHealthCheck,
+	}
 }
 
 func (ig *ignoreHealthCheckCore) Check(e zapcore.Entry, ce *zapcore.CheckedEntry) *zapcore.CheckedEntry {
-	if e.Level == zap.InfoLevel && strings.HasSuffix(e.Message, "call with code OK") {
+	if ig.isHealthCheck {
 		return nil
 	}
 
@@ -31,7 +40,6 @@ func (ig *ignoreHealthCheckCore) Check(e zapcore.Entry, ce *zapcore.CheckedEntry
 }
 
 func (ig *ignoreHealthCheckCore) Write(e zapcore.Entry, fs []zapcore.Field) error {
-
 	return ig.c.Write(e, fs)
 }
 
@@ -66,7 +74,9 @@ func NewLogger(ctx context.Context) (*zap.Logger, error) {
 		ErrorOutputPaths:  []string{"stderr"},
 	}
 
-	logger, err := zapConfig.Build()
+	logger, err := zapConfig.Build(zap.WrapCore(func(c zapcore.Core) zapcore.Core {
+		return &ignoreHealthCheckCore{c: c}
+	}))
 	if err != nil {
 		return nil, err
 	}
@@ -74,9 +84,6 @@ func NewLogger(ctx context.Context) (*zap.Logger, error) {
 	instanceID := uuid.New().String()
 	logger = logger.With(zap.String("K_REVISION", os.Getenv("K_REVISION")), zap.String("instance_id", instanceID))
 	// grpc_zap.ReplaceGrpcLoggerV2(logger)
-	logger = logger.WithOptions(zap.WrapCore(func(c zapcore.Core) zapcore.Core {
-		return &ignoreHealthCheckCore{c}
-	}))
 
 	return logger, nil
 
