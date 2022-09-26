@@ -2,7 +2,6 @@ package logger
 
 import (
 	"context"
-	"log"
 	"os"
 	"strings"
 
@@ -24,8 +23,7 @@ func (ig *ignoreHealthCheckCore) With(fs []zapcore.Field) zapcore.Core {
 }
 
 func (ig *ignoreHealthCheckCore) Check(e zapcore.Entry, ce *zapcore.CheckedEntry) *zapcore.CheckedEntry {
-	log.Println("Check log entry", e.Level, e.Message)
-	if e.Level == zap.InfoLevel && strings.Contains(e.Message, "finished unary call with code OK") {
+	if e.Level == zap.InfoLevel && strings.HasSuffix(e.Message, "call with code OK") {
 		return nil
 	}
 
