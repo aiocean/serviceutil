@@ -13,7 +13,7 @@ import (
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel"
-	tracesdk "go.opentelemetry.io/otel/sdk/trace"
+	tracesdk "go.opentelemetry.io/otel/trace"
 
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -40,7 +40,7 @@ func NewHandler(
 	serviceServer ServiceServer,
 	healthServer *healthserver.Server,
 	interceptor *interceptor.Interceptor,
-	tracerSvc *tracesdk.TracerProvider,
+	tracerSvc tracesdk.TracerProvider,
 ) *Handler {
 	otel.SetTracerProvider(tracerSvc)
 
