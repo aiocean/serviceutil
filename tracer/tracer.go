@@ -9,6 +9,7 @@ import (
 	"go.opentelemetry.io/otel/exporters/jaeger"
 	"go.opentelemetry.io/otel/sdk/resource"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
+
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 )
@@ -44,7 +45,7 @@ func (_ *normalSampler) Description() string {
 // - OTEL_EXPORTER_JAEGER_AGENT_HOST for the agent address host
 // - OTEL_EXPORTER_JAEGER_AGENT_PORT for the agent address port
 // - OTEL_SERVICE_NAME for service name
-func NewTracer(ctx context.Context, logger *zap.Logger) (*tracesdk.TracerProvider, func(), error) {
+func NewTracer(ctx context.Context, logger *zap.Logger) (trace.TracerProvider, func(), error) {
 	exp, err := jaeger.New(jaeger.WithAgentEndpoint())
 	if err != nil {
 		return nil, nil, err
