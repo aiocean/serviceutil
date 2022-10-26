@@ -5,6 +5,8 @@ import (
 	"log"
 	"net"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/aiocean/serviceutil/healthserver"
 	"github.com/aiocean/serviceutil/interceptor"
@@ -91,6 +93,16 @@ func (h *Handler) Serve() {
 	if err != nil {
 		h.Logger.Fatal("failed to listen", zap.Error(err))
 	}
+
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		<-sig
+		h.Logger.Info("shutting down")
+		h.GrpcServer.GracefulStop()
+		h.Logger.Info("graceful stop")
+	}()
 
 	if err := h.GrpcServer.Serve(listen); err != nil {
 		h.Logger.Fatal("Failed to serve", zap.Error(err))
