@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -56,18 +57,21 @@ func (ig ignoreHealthCheckCore) Sync() error {
 }
 
 func NewLogger(ctx context.Context) (*zap.Logger, error) {
+	loc := time.FixedZone("UTC+7", 7*60*60)
 
 	encoderConfig := zapcore.EncoderConfig{
-		TimeKey:        "ts",
-		LevelKey:       "level",
-		NameKey:        "logger",
-		CallerKey:      "caller",
-		MessageKey:     "msg",
-		StacktraceKey:  "stacktrace",
-		LineEnding:     zapcore.DefaultLineEnding,
-		EncodeLevel:    zapcore.LowercaseLevelEncoder,
-		EncodeTime:     zapcore.EpochTimeEncoder,
-		EncodeDuration: zapcore.SecondsDurationEncoder,
+		TimeKey:       "ts",
+		LevelKey:      "level",
+		NameKey:       "logger",
+		CallerKey:     "caller",
+		MessageKey:    "msg",
+		StacktraceKey: "stacktrace",
+		LineEnding:    zapcore.DefaultLineEnding,
+		EncodeLevel:   zapcore.LowercaseLevelEncoder,
+		EncodeTime: func(t time.Time, pae zapcore.PrimitiveArrayEncoder) {
+			zapcore.RFC3339TimeEncoder(t.In(loc), pae)
+		},
+		EncodeDuration: zapcore.MillisDurationEncoder,
 		EncodeCaller:   zapcore.ShortCallerEncoder,
 	}
 
