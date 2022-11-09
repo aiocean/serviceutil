@@ -93,9 +93,19 @@ func NewLogger(ctx context.Context) (*zap.Logger, error) {
 		return nil, err
 	}
 
-	instanceID := uuid.New().String()
-	logger = logger.With(zap.String("K_REVISION", os.Getenv("K_REVISION")), zap.String("instance_id", instanceID))
-	// grpc_zap.ReplaceGrpcLoggerV2(logger)
+	if kRevision, ok := os.LookupEnv("K_REVISION"); ok {
+		logger = logger.With(zap.String("K_REVISION", kRevision))
+	}
+
+	var instanceID string
+	if hostName, ok := os.LookupEnv("HOSTNAME"); ok {
+		lastDash := strings.LastIndex(hostName, "-")
+		instanceID = hostName[lastDash+1:]
+	} else {
+		instanceID = uuid.New().String()
+	}
+
+	logger = logger.With(zap.String("instance_id", instanceID))
 
 	return logger, nil
 
