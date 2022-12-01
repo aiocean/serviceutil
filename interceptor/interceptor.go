@@ -51,10 +51,10 @@ func getZapStackTrace(panic interface{}) []zapcore.Field {
 	// for line in reverse order
 	for i := len(lines) - 1; i >= 0; i-- {
 		line := lines[i]
-		if strings.HasPrefix(line, "\t/build") {
-			if !strings.HasPrefix(line, "\t/build/vendor") {
+		if strings.Contains(line, ".go:") {
+			if !strings.Contains(line, "/vendor/") &&
+				!strings.HasPrefix(line, "\t/usr/local/go/src/runtime/") {
 				stackLine++
-				line = strings.TrimPrefix(line, "\t/build")
 
 				// remove +0x... at the end of the line
 				split := strings.LastIndex(line, " +0x")
